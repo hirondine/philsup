@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use ApiPlatform\Core\Annotation\ApiResource;
+
 use App\Repository\MessageRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -17,10 +18,12 @@ class Message
     #[ORM\Column(type: 'integer')]
     private $id;
 
-    #[ORM\Column(type: 'string',)]
+    #[ORM\Column(type: 'string',length:255,nullable:true)]
+    #[Groups(["read", "write"])]
     private $image;
 
     #[ORM\Column(type: 'text')]
+    #[Groups(["read", "write"])]
     private $content;
 
     #[ORM\OneToMany(mappedBy: 'message', targetEntity: Like::class)]
@@ -30,16 +33,20 @@ class Message
     private $comments;
 
     #[ORM\Column(type: 'integer')]
+    #[Groups(["read", "write"])]
     private $count_like;
 
     #[ORM\Column(type: 'datetime')]
+    #[Groups("read",)]
     private $created_at;
 
     #[ORM\Column(type: 'datetime', nullable: true)]
+    #[Groups("read",)]
     private $updated_at;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'messages')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(["read", "write"])]
     private $user;
 
     #[ORM\OneToMany(mappedBy: 'message', targetEntity: Media::class)]

@@ -7,7 +7,8 @@
                   use Doctrine\ORM\Mapping as ORM;
                   
                   #[ORM\Entity(repositoryClass: CommentRepository::class)]
-                  #[ApiResource(collectionOperations:["get","post"],itemOperations:["patch","delete"])]
+                  #[ApiResource(collectionOperations:["get","post"],itemOperations:["put","delete"])]
+                  #[Groups("read",)]
                   class Comment
                   {
                       #[ORM\Id]
@@ -16,20 +17,26 @@
                       private $id;
                   
                       #[ORM\Column(type: 'text')]
+                      #[Groups(["read", "write"])]
                       private $content;
                   
                       #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'comments')]
                       #[ORM\JoinColumn(nullable: false)]
+                      #[Groups(["read", "write"])]
                       private $user;
                   
                       #[ORM\ManyToOne(targetEntity: Message::class, inversedBy: 'comments')]
+                      #[ORM\JoinColumn(nullable: false)]
+                      #[Groups(["read", "write"])]
                       private $message;
                
                       #[ORM\Column(type: 'datetime')]
+                      #[Groups("read",)]
                       private $created_at;
       
                       #[ORM\Column(type: 'datetime', nullable: true)]
                       private $updated_at;
+                      #[Groups("read",)]
 
                     public function __construct()
                     {

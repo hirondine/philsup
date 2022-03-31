@@ -2,16 +2,20 @@
 
 namespace App\Entity;
 
-use App\Repository\UserRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
-use Symfony\Component\Security\Core\User\UserInterface;
+use App\Repository\UserRepository;
+use Doctrine\Common\Collections\Collection;
 use ApiPlatform\Core\Annotation\ApiResource;
+use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Annotation\SerializedName;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
-#[ApiResource(collectionOperations:["post"],itemOperations:["get","put","delete"])]
+#[ApiResource(collectionOperations: ["post"], itemOperations: ["get", "put", "delete"], normalizationContext: ['groups' => ['read']],
+denormalizationContext: ['groups' => ['write']])]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -20,6 +24,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private $id;
 
     #[ORM\Column(type: 'string', length: 180, unique: true)]
+    #[Groups(["read", "write"])]
+    #[Assert\NotBlank]
+    #[Assert\Email(
+        message: 'The email {{ value }} is not a valid email.',
+    )]
     private $email;
 
     #[ORM\Column(type: 'json')]
@@ -29,18 +38,25 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private $password;
 
     #[ORM\Column(type: 'string', length: 255)]
+    #[Groups(["read", "write"])]
+    #[Assert\NotBlank]
     private $firstname;
 
     #[ORM\Column(type: 'string', length: 255)]
+    #[Groups(["read", "write"])]
+    #[Assert\NotBlank]
     private $lastname;
 
     #[ORM\Column(type: 'string', length: 25, nullable: true)]
+    #[Groups(["read", "write"])]
     private $phone;
 
     #[ORM\Column(type: 'text', nullable: true)]
+    #[Groups(["read", "write"])]
     private $address;
 
     #[ORM\Column(type: 'text', nullable: true)]
+    #[Groups(["read", "write"])]
     private $description;
 
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: Like::class)]
@@ -53,10 +69,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private $messages;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Groups(["read", "write"])]
     private $avatar;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Groups(["read", "write"])]
     private $job;
+
+    #[Assert\NotBlank]
+    #[Groups("write")]
+    #[SerializedName("password")]
+    private $plainPassword;
 
     public function __construct()
     {
@@ -132,7 +155,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function eraseCredentials()
     {
         // If you store any temporary, sensitive data on the user, clear it here
-        // $this->plainPassword = null;
+         $this->plainPassword = null;
     }
 
     public function getFirstname(): ?string
@@ -305,6 +328,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setJob(?string $job): self
     {
         $this->job = $job;
+
+        return $this;
+    }
+
+    public function getPlainPassword(): ?string
+    {
+        return $this->plainPassword;
+    }
+
+    public function setPlainPassword(?string $plainPassword): self
+    {
+        $this->plainPassword = $plainPassword;
 
         return $this;
     }

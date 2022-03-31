@@ -19,10 +19,12 @@ class Like
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'likes')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(["read", "write"])]
     private $user;
 
     #[ORM\ManyToOne(targetEntity: Message::class, inversedBy: 'likes')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(["read", "write"])]
     private $message;
 
     public function getId(): ?int
