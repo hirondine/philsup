@@ -14,17 +14,18 @@ use Symfony\Component\Serializer\Annotation\SerializedName;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
-#[ApiResource(collectionOperations: ["post"], itemOperations: ["get", "put", "delete"], normalizationContext: ['groups' => ['read']],
-denormalizationContext: ['groups' => ['write']])]
+#[ApiResource(collectionOperations: ["post","get"], itemOperations: ["get", "patch", "delete"], normalizationContext: ['groups' => ['user:read']],
+denormalizationContext: ['groups' => ['user:write']])]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
+    #[Groups(["user:read","message:read","comment:read"])]
     private $id;
 
     #[ORM\Column(type: 'string', length: 180, unique: true)]
-    #[Groups(["read", "write"])]
+    #[Groups(["user:read", "user:write"])]
     #[Assert\NotBlank]
     #[Assert\Email(
         message: 'The email {{ value }} is not a valid email.',
@@ -38,29 +39,28 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private $password;
 
     #[ORM\Column(type: 'string', length: 255)]
-    #[Groups(["read", "write"])]
+    #[Groups(["user:read", "user:write","message:read","comment:read"])]
     #[Assert\NotBlank]
     private $firstname;
 
     #[ORM\Column(type: 'string', length: 255)]
-    #[Groups(["read", "write"])]
+    #[Groups(["user:read", "user:write","message:read","comment:read"])]
     #[Assert\NotBlank]
     private $lastname;
 
     #[ORM\Column(type: 'string', length: 25, nullable: true)]
-    #[Groups(["read", "write"])]
+    #[Groups(["user:read", "user:write"])]
     private $phone;
 
     #[ORM\Column(type: 'text', nullable: true)]
-    #[Groups(["read", "write"])]
+    #[Groups(["user:read", "user:write"])]
     private $address;
 
     #[ORM\Column(type: 'text', nullable: true)]
-    #[Groups(["read", "write"])]
+    #[Groups(["user:read", "user:write"])]
     private $description;
 
-    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Like::class)]
-    private $likes;
+   
 
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: Comment::class)]
     private $comments;
@@ -69,26 +69,30 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private $messages;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    #[Groups(["read", "write"])]
+    #[Groups(["user:read", "user:write"])]
     private $avatar;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    #[Groups(["read", "write"])]
+    #[Groups(["user:read", "user:write"])]
     private $job;
 
-    #[Assert\NotBlank]
-    #[Groups("write")]
+    #[Assert\NotBlank(groups: ["postValidation"])]
+    #[Groups("user:write")]
     #[SerializedName("password")]
     private $plainPassword;
 
    
     private $username;
 
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Liked::class)]
+    private $likeds;
+
     public function __construct()
     {
-        $this->likes = new ArrayCollection();
+        
         $this->comments = new ArrayCollection();
         $this->messages = new ArrayCollection();
+        $this->likeds = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -221,35 +225,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    /**
-     * @return Collection<int, Like>
-     */
-    public function getLikes(): Collection
-    {
-        return $this->likes;
-    }
+   
 
-    public function addLike(Like $like): self
-    {
-        if (!$this->likes->contains($like)) {
-            $this->likes[] = $like;
-            $like->setUser($this);
-        }
-
-        return $this;
-    }
-
-    public function removeLike(Like $like): self
-    {
-        if ($this->likes->removeElement($like)) {
-            // set the owning side to null (unless already changed)
-            if ($like->getUser() === $this) {
-                $like->setUser(null);
-            }
-        }
-
-        return $this;
-    }
+    
+    
 
     /**
      * @return Collection<int, Comment>
@@ -355,6 +334,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setUsername(string $username): self
     {
         $this->username = $username;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Liked>
+     */
+    public function getLikeds(): Collection
+    {
+        return $this->likeds;
+    }
+
+    public function addLiked(Liked $liked): self
+    {
+        if (!$this->likeds->contains($liked)) {
+            $this->likeds[] = $liked;
+            $liked->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeLiked(Liked $liked): self
+    {
+        if ($this->likeds->removeElement($liked)) {
+            // set the owning side to null (unless already changed)
+            if ($liked->getUser() === $this) {
+                $liked->setUser(null);
+            }
+        }
 
         return $this;
     }
